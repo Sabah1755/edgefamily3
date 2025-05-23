@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EdgeFamily3 Bağış Sistemi</title>
+<style>
+  /* Genel ayarlar */
+  body {
+    margin: 0; padding: 0;
+    background-color: #121212;
+    color: #eee;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding-top: 40px;
+  }
+  .container {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    width: 90vw;
+    max-width: 420px;
+    box-shadow: 0 0 15px #000;
+    padding: 20px;
+  }
+  header {
+    background-color: #0a5ab3;
+    padding: 12px 20px;
+    border-radius: 6px 6px 0 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: white;
+    user-select: none;
+  }
+  nav {
+    display: flex;
+    justify-content: space-around;
+    background: #123a70;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: 10px;
+  }
+  nav a {
+    color: white;
+    padding: 12px 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-grow: 1;
+    text-align: center;
+    border-right: 1px solid #2557ab;
+    user-select: none;
+  }
+  nav a:last-child {
+    border-right: none;
+  }
+  nav a.active {
+    background-color: #0f3e83;
+    font-weight: 700;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label {
+    font-weight: 600;
+    user-select: none;
+  }
+  input[type="text"], input[type="email"], input[type="number"], input[type="password"] {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #292929;
+    color: #eee;
+    font-size: 1rem;
+  }
+  input[type="radio"] {
+    margin-right: 6px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+  button {
+    padding: 12px 0;
+    background-color: #0a5ab3;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  button:hover {
+    background-color: #0f70d0;
+  }
+  .payment-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  .payment-options button {
+    flex: 1;
+    font-size: 1rem;
+  }
+  .centered-text {
+    text-align: center;
+    margin-top: 20px;
+    font-style: italic;
+    color: #bbb;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>EdgeFamily3 Bağış Sistemi</header>
+  <nav>
+    <a href="#" id="nav-register" class="active">Kayıt</a>
+    <a href="#" id="nav-payment">Ödeme</a>
+    <a href="#" id="nav-vip">VIP Talep</a>
+    <a href="#" id="nav-admin">Admin Panel</a>
+  </nav>
+
+  <!-- Kayıt Formu -->
+  <section id="section-register">
+    <form id="register-form">
+      <label for="name">Ad Soyad</label>
+      <input type="text" id="name" required />
+
+      <label for="email">E-posta</label>
+      <input type="email" id="email" required />
+
+      <label>TC Vatandaşı mısınız?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="tc-vatandas" value="evet" required /> Evet</label>
+        <label><input type="radio" name="tc-vatandas" value="hayir" /> Hayır</label>
+      </div>
+
+      <label for="tcno" id="tcno-label">T.C. Kimlik No</label>
+      <input type="text" id="tcno" pattern="[0-9]{11}" maxlength="11" required />
+
+      <button type="submit">Kayıt Ol</button>
+    </form>
+  </section>
+
+  <!-- Ödeme Formu -->
+  <section id="section-payment" class="hidden">
+    <label for="amount">Ödeme Yap</label>
+    <input type="number" id="amount" min="1" value="10" />
+    <div class="payment-options">
+      <button id="btn-paypal">2D Ödeme (PayPal)</button>
+      <button id="btn-stripe">3D Ödeme (Stripe)</button>
+    </div>
+  </section>
+
+  <!-- VIP Talep -->
+  <section id="section-vip" class="hidden">
+    <form id="vip-form">
+      <label for="vip-request">VIP Talep</label>
+      <textarea id="vip-request" rows="4" style="width:100%;" placeholder="Talebinizi yazınız..."></textarea>
+      <button type="submit">Gönder</button>
+    </form>
+  </section>
+
+  <!-- Admin Panel -->
+  <section id="section-admin" class="hidden">
+    <form id="admin-login-form">
+      <label for="admin-pass">Admin Şifre</label>
+      <input type="password" id="admin-pass" required />
+      <button type="submit">Giriş Yap</button>
+    </form>
+    <div id="admin-panel-content" class="hidden">
+      <h3>VIP Talepler</h3>
+      <ul id="vip-requests-list"></ul>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Menüler ve bölümler
+  const sections = {
+    register: document.getElementById("section-register"),
+    payment: document.getElementById("section-payment"),
+    vip: document.getElementById("section-vip"),
+    admin: document.getElementById("section-admin"),
+  };
+  const navLinks = {
+    register: document.getElementById("nav-register"),
+    payment: document.getElementById("nav-payment"),
+    vip: document.getElementById("nav-vip"),
+    admin: document.getElementById("nav-admin"),
+  };
+
+  function showSection(name) {
+    for (const key in sections) {
+      sections[key].classList.add("hidden");
+      navLinks[key].classList.remove("active");
+    }
+    sections[name].classList.remove("hidden");
+    navLinks[name].classList.add("active");
+  }
+
+  navLinks.register.onclick = (e) => {
+    e.preventDefault();
+    showSection("register");
+  };
+  navLinks.payment.onclick = (e) => {
+    e.preventDefault();
+    showSection("payment");
+  };
+  navLinks.vip.onclick = (e) => {
+    e.preventDefault();
+    showSection("vip");
+  };
+  navLinks.admin.onclick = (e) => {
+    e.preventDefault();
+    showSection("admin");
+  };
+
+  // TC Kimlik No alanı kontrolü
+  const tcRadios = document.getElementsByName("tc-vatandas");
+  const tcnoInput = document.getElementById("tcno");
+  const tcnoLabel = document.getElementById("tcno-label");
+
+  function toggleTCField() {
+    let selected = [...tcRadios].find((r) => r.checked);
+    if (selected && selected.value === "hayir") {
+      tcnoInput.required = false;
+      tcnoInput.value = "";
+      tcnoLabel.style.color = "#888";
+      tcnoInput.disabled = true;
+    } else {
+      tcnoInput.required = true;
+      tcnoLabel.style.color = "#eee";
+      tcnoInput.disabled = false;
+    }
+  }
+  tcRadios.forEach((r) => r.addEventListener("change", toggleTCField));
+  toggleTCField();
+
+  // Kayıt formu işlemi (demo, LocalStorage)
+  const registerForm = document.getElementById("register-form");
+  registerForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const tcVatandas = [...tcRadios].find((r) => r.checked)?.value;
+    const tcno = document.getElementById("tcno").value.trim();
+
+    const user = { name, email, tcVatandas, tcno };
+    // LocalStorage'a kaydet
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    users.push(user);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Kayıt başarılı!");
+    showSection("payment");
+  });
+
+  // Ödeme butonları (demo linkler)
+  document.getElementById("btn-paypal").addEventListener("click", () => {
+    const amount = document.getElementById("amount").value;
+    if (amount < 1) {
+      alert("Lütfen geçerli bir ödeme tutarı girin.");
+      return;
+    }
+    // Burada PayPal ödeme sayfasına yönlendirme yapabilirsiniz
+    alert("PayPal ile ödeme (demo): " + amount + " USD");
+  });
+  document.getElementById("btn-stripe").addEventListener("click", () => {
+    const amount = document.getElementById("amount").value;
+    if (amount < 1) {
+      alert("Lütfen geçerli bir ödeme tutarı girin.");
+      return;
+    }
+    // Burada Stripe ödeme sayfasına yönlendirme yapabilirsiniz
+    alert("Stripe ile ödeme (demo): " + amount + " USD");
+  });
+
+  // VIP Talep formu (LocalStorage demo)
+  const vipForm = document.getElementById("vip-form");
+  const vipRequestsList = document.getElementById("vip-requests-list");
+  vipForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const requestText = document.getElementById("vip-request").value.trim();
+    if (!requestText) {
+      alert("Lütfen talebinizi yazınız.");
+      return;
+    }
+    let requests = JSON.parse(localStorage.getItem("vipRequests") || "[]");
+    requests.push(requestText);
+    localStorage.setItem("vipRequests", JSON.stringify(requests));
+    alert("Talebiniz gönderildi.");
+    document.getElementById("vip-request").value = "";
+  });
+
+  // Admin giriş ve liste gösterimi
+  const adminPassInput = document.getElementById("admin-pass");
+  const adminLoginForm = document.getElementById("admin-login-form");
+  const adminPanelContent = document.getElementById("admin-panel-content");
+
+  adminLoginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const pass = adminPassInput.value.trim();
+    if (pass === "ApoMelis171123") {
+      adminLoginForm.classList.add("hidden");
+      adminPanelContent.classList.remove("hidden");
+      loadVIPRequests();
+    } else {
+      alert("Yanlış şifre!");
+    }
+  });
+
+  function loadVIPRequests() {
+    let requests = JSON.parse(localStorage.getItem("vipRequests") || "[]");
+    vipRequestsList.innerHTML = "";
+    if (requests.length === 0) {
+      vipRequestsList.innerHTML = "<li>Hiç talep yok.</li>";
+    } else {
+      requests.forEach((r, i) => {
+        const li = document.createElement("li");
+        li.textContent = `${i + 1}. ${r}`;
+        vipRequestsList.appendChild(li);
+      });
+    }
+  }
+</script>
+</body>
+</html>
